@@ -79,7 +79,7 @@ export default function Dashboard({ user, onLogout }: Props) {
       };
 
       const userId = (currentUser as any).id || 1;
-      const response = await axios.put(`http://127.0.0.1:8000/update_profil/${userId}`, payload);
+      const response = await axios.put(`https://allestyo-api-kardioku.hf.space/update_profil/${userId}`, payload);
 
       if (response.data.status === 'Sukses') {
         const updatedUser: UserProfile = {

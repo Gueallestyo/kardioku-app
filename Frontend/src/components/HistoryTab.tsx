@@ -39,7 +39,7 @@ export default function HistoryTab({ user }: Props) {
       try {
         setLoading(true);
         const userId = user?.id || 1;
-        const response = await axios.get(`http://127.0.0.1:8000/riwayat/${userId}`);
+        const response = await axios.get(`https://allestyo-api-kardioku.hf.space/riwayat/${userId}`);
         
         if (response.data.status_kode === 200) {
           const mappedData = response.data.data.map((r: any) => ({

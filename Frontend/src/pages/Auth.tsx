@@ -69,7 +69,7 @@ export default function Auth({ onAuthenticated }: AuthProps) {
     try {
       if (mode === 'login') {
         // --- PROSES LOGIN (TIDAK CEK REGEX PASSWORD, BEBAS PAKAI AKUN LAMA) ---
-        const response = await axios.post('http://127.0.0.1:8000/login', {
+        const response = await axios.post('https://allestyo-api-kardioku.hf.space/login', {
           nama_pengguna: finalUsername,
           kata_sandi: password
         });
@@ -94,7 +94,7 @@ export default function Auth({ onAuthenticated }: AuthProps) {
 
       } else if (mode === 'register') {
         // --- PROSES BUAT AKUN ---
-        const response = await axios.post('http://127.0.0.1:8000/register', {
+        const response = await axios.post('https://allestyo-api-kardioku.hf.space/register', {
           nama_pengguna: finalUsername,
           email: `${finalUsername}@kardioku.com`, 
           kata_sandi: password,
@@ -124,7 +124,7 @@ export default function Auth({ onAuthenticated }: AuthProps) {
 
       } else if (mode === 'forgot-password') {
         // --- PROSES LUPA KATA SANDI (RESET) ---
-        const response = await axios.put('http://127.0.0.1:8000/reset_password', {
+        const response = await axios.put('https://allestyo-api-kardioku.hf.space/reset_password', {
           nama_pengguna: finalUsername,
           kata_sandi_baru: password
         });

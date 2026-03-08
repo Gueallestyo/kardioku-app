@@ -117,7 +117,7 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
         aktivitas_fisik: aktivitas
       };
 
-      const response = await axios.post('http://127.0.0.1:8000/prediksi', payload);
+      const response = await axios.post('https://allestyo-api-kardioku.hf.space/prediksi', payload);
 
       if (response.data.status_kode === 200) {
         const hasil = response.data.hasil_prediksi;
