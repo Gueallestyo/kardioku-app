@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 7860
 
 # 7. Perintah wajib untuk menyalakan server saat kontainer hidup
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
