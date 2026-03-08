@@ -1,0 +1,11 @@
+bcrypt
+python-multipart
+pymysql
+uvicorn
+scikit-learn==1.7.2
+fastapi==0.135.1
+joblib==1.5.3
+pandas==3.0.1
+passlib==1.7.4
+pydantic==2.12.5
+SQLAlchemy==2.0.48

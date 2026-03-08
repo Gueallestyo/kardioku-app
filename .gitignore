@@ -1,0 +1,10 @@
+# Mengabaikan folder environment Python
+.venv/
+venv/
+env/
+__pycache__/
+
+# Mengabaikan folder library React yang berat
+node_modules/
+dist/
+.DS_Store

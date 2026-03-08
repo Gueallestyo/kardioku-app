@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ============================================
+   Kardioku Design System
+   Medical-tech aesthetic: Teal / Cyan / White
+   All colors MUST be HSL.
+============================================ */
+
+@layer base {
+  :root {
+    /* Core Palette */
+    --background: 210 20% 98%;
+    --foreground: 215 28% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 12%;
+
+    /* Primary: Deep Medical Teal */
+    --primary: 194 85% 28%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 194 85% 36%;
+    --primary-glow: 194 85% 50%;
+
+    /* Secondary: Soft Teal Surface */
+    --secondary: 194 40% 93%;
+    --secondary-foreground: 194 85% 22%;
+
+    /* Muted */
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 50%;
+
+    /* Accent: Bright Cyan */
+    --accent: 187 100% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Semantic Colors */
+    --success: 152 68% 31%;
+    --success-light: 152 55% 94%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-light: 38 100% 94%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-light: 0 90% 95%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* UI */
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 194 85% 36%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(194 85% 28%), hsl(187 100% 36%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(194 40% 97%));
+    --gradient-risk-low: linear-gradient(90deg, hsl(152 68% 31%), hsl(152 60% 45%));
+    --gradient-risk-medium: linear-gradient(90deg, hsl(38 92% 50%), hsl(45 100% 58%));
+    --gradient-risk-high: linear-gradient(90deg, hsl(0 84% 55%), hsl(0 90% 68%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 hsl(215 28% 12% / 0.06), 0 1px 2px -1px hsl(215 28% 12% / 0.06);
+    --shadow-md: 0 4px 12px -2px hsl(215 28% 12% / 0.08), 0 2px 6px -2px hsl(215 28% 12% / 0.06);
+    --shadow-lg: 0 10px 30px -5px hsl(215 28% 12% / 0.10), 0 4px 12px -4px hsl(215 28% 12% / 0.08);
+    --shadow-primary: 0 4px 20px -4px hsl(194 85% 28% / 0.35);
+
+    /* Sidebar */
+    --sidebar-background: 194 30% 96%;
+    --sidebar-foreground: 215 28% 12%;
+    --sidebar-primary: 194 85% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 194 40% 90%;
+    --sidebar-accent-foreground: 194 85% 22%;
+    --sidebar-border: 214 20% 88%;
+    --sidebar-ring: 194 85% 36%;
+  }
+
+  .dark {
+    --background: 218 30% 8%;
+    --foreground: 210 30% 92%;
+    --card: 218 28% 12%;
+    --card-foreground: 210 30% 92%;
+    --popover: 218 28% 12%;
+    --popover-foreground: 210 30% 92%;
+    --primary: 194 85% 45%;
+    --primary-foreground: 218 30% 8%;
+    --secondary: 218 25% 18%;
+    --secondary-foreground: 210 30% 85%;
+    --muted: 218 25% 16%;
+    --muted-foreground: 215 20% 56%;
+    --accent: 187 100% 45%;
+    --accent-foreground: 218 30% 8%;
+    --border: 218 20% 20%;
+    --input: 218 20% 20%;
+    --ring: 194 85% 45%;
+    --sidebar-background: 218 28% 10%;
+    --sidebar-foreground: 210 30% 85%;
+    --sidebar-primary: 194 85% 45%;
+    --sidebar-primary-foreground: 218 30% 8%;
+    --sidebar-accent: 218 25% 16%;
+    --sidebar-accent-foreground: 210 30% 85%;
+    --sidebar-border: 218 20% 18%;
+    --sidebar-ring: 194 85% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ============================================
+   Custom Utility Classes
+============================================ */
+@layer utilities {
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-primary {
+    box-shadow: var(--shadow-primary);
+  }
+
+  .text-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* ============================================
+   Animations
+============================================ */
+@keyframes pulse-heart {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.2); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.15); }
+  56% { transform: scale(1); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes gauge-sweep {
+  from { stroke-dashoffset: 220; }
+  to { stroke-dashoffset: var(--gauge-offset); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-heart {
+  animation: pulse-heart 1.4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.animate-blink {
+  animation: blink-dot 1s ease-in-out infinite;
+}
+
+/* ============================================
+   Accordion Override
+============================================ */
+[data-state="open"] .accordion-icon {
+  transform: rotate(180deg);
+}
+.accordion-icon {
+  transition: transform 0.2s ease;
+}
