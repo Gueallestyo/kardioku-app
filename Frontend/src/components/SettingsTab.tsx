@@ -11,15 +11,18 @@ interface ReminderSchedule {
   pagi: boolean;
   siang: boolean;
   malam: boolean;
+  kustom: boolean; // TAMBAHAN BARU: Menambahkan opsi kustom ke interface
 }
 
 export default function SettingsTab({ onLogout }: Props) {
   const [reminderOn, setReminderOn] = useState(getReminderState());
   const [urgencyOn, setUrgencyOn] = useState(false);
-  const [schedule, setSchedule] = useState<ReminderSchedule>({ pagi: false, siang: true, malam: false });
+  // TAMBAHAN BARU: Menambahkan nilai default kustom: false
+  const [schedule, setSchedule] = useState<ReminderSchedule>({ pagi: false, siang: true, malam: false, kustom: false });
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | 'unsupported'>('default');
   const [showPermissionBanner, setShowPermissionBanner] = useState(false);
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+  const [customTime, setCustomTime] = useState("");
   
   // State untuk Pop-up Konfirmasi Logout
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -156,6 +159,8 @@ export default function SettingsTab({ onLogout }: Props) {
                 { key: 'pagi' as const, label: 'Pagi', time: '08:00', emoji: '🌅' },
                 { key: 'siang' as const, label: 'Siang', time: '13:00', emoji: '☀️' },
                 { key: 'malam' as const, label: 'Malam', time: '20:00', emoji: '🌙' },
+                // TAMBAHAN BARU: Opsi Atur Sendiri (Kustom) dimasukkan ke dalam daftar
+                { key: 'kustom' as const, label: 'Atur Sendiri', time: customTime || '--:--', emoji: '⏱️' },
               ].map(item => (
                 <label key={item.key} className="flex items-center gap-3 cursor-pointer group">
                   <div
@@ -175,6 +180,19 @@ export default function SettingsTab({ onLogout }: Props) {
                   <span className="text-sm text-foreground">{item.emoji} {item.label} ({item.time})</span>
                 </label>
               ))}
+
+              {/* TAMBAHAN BARU: Kotak Input Waktu muncul HANYA saat 'Atur Sendiri' dicentang */}
+              {schedule.kustom && (
+                <div className="mt-3 ml-8 p-3 bg-background border border-border rounded-xl animate-fade-in-up flex items-center gap-3">
+                  <label className="text-xs text-muted-foreground font-medium">Tentukan Waktu:</label>
+                  <input
+                    type="time"
+                    value={customTime}
+                    onChange={(e) => setCustomTime(e.target.value)}
+                    className="bg-transparent border border-input rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-all"
+                  />
+                </div>
+              )}
             </div>
           )}
 
