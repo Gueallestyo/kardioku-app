@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 
-// Kategori Berita sesuai rancangan Kardioku 2.0.0
 type NewsCategory = 'Semua' | 'Latest News' | 'Heart Health Tips' | 'Research Updates';
 
-// Struktur Data untuk Kartu Berita
 interface NewsArticle {
   id: string;
   category: NewsCategory;
@@ -16,7 +14,7 @@ interface NewsArticle {
   url: string;
 }
 
-// 📰 DUMMY DATA: Berita tiruan untuk menguji tampilan UI
+// DUMMY DATA sebagai cadangan (Fallback) jika internet mati atau kuota API habis
 const DUMMY_NEWS: NewsArticle[] = [
   {
     id: '1',
@@ -37,38 +35,70 @@ const DUMMY_NEWS: NewsArticle[] = [
     date: '8 Mar 2026',
     imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800',
     url: '#'
-  },
-  {
-    id: '3',
-    category: 'Research Updates',
-    title: 'Studi Terbaru: Hubungan Antara Kualitas Tidur dan Aritmia Jantung',
-    summary: 'Penelitian dari American Heart Association menemukan bahwa individu yang tidur kurang dari 6 jam sehari memiliki risiko 20% lebih tinggi mengalami gangguan irama jantung.',
-    source: 'American Heart Association',
-    date: '5 Mar 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800',
-    url: '#'
-  },
-  {
-    id: '4',
-    category: 'Heart Health Tips',
-    title: 'Diet Mediterania: Kunci Emas Menuju Jantung Kuat di Usia Lanjut',
-    summary: 'Mengkonsumsi minyak zaitun, ikan laut, dan kacang-kacangan secara rutin terbukti secara klinis dapat membersihkan plak pada pembuluh darah arteri.',
-    source: 'WebMD',
-    date: '3 Mar 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
-    url: '#'
   }
 ];
 
 export default function NewsTab() {
   const [activeCategory, setActiveCategory] = useState<NewsCategory>('Semua');
+  // State untuk menyimpan berita (Awalnya kosong, lalu diisi API, atau Dummy jika gagal)
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Logika Filter Berita
+  // FUNGSI MESIN PENCARI BERITA OTOMATIS
+  useEffect(() => {
+    const fetchNews = async () => {
+      setIsLoading(true);
+      try {
+        // ⚠️ GANTI TEKS DI BAWAH INI DENGAN API KEY DARI GNEWS.IO ANDA
+        const API_KEY = 'e0ccd1c0add77732e62f7fb88f42171e'; 
+        
+        // Memanggil API (Mencari berita tentang jantung/kardiovaskular dalam bahasa Indonesia)
+        const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
+        const data = await response.json();
+
+        if (data.articles && data.articles.length > 0) {
+          const fetchedNews: NewsArticle[] = data.articles.map((item: any, index: number) => {
+            // Ubah format tanggal API menjadi format yang rapi
+            const dateObj = new Date(item.publishedAt);
+            const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            // Trik Kategori Otomatis berdasarkan kata kunci di judul
+            const titleLower = item.title.toLowerCase();
+            let cat: NewsCategory = 'Latest News';
+            if (titleLower.includes('tips') || titleLower.includes('cara') || titleLower.includes('hindari')) cat = 'Heart Health Tips';
+            else if (titleLower.includes('studi') || titleLower.includes('penelitian') || titleLower.includes('ilmuwan')) cat = 'Research Updates';
+
+            return {
+              id: `api-${index}`,
+              category: cat,
+              title: item.title,
+              summary: item.description,
+              source: item.source.name,
+              date: formattedDate,
+              imageUrl: item.image || 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
+              url: item.url
+            };
+          });
+          setArticles(fetchedNews);
+        } else {
+          // Jika tidak ada berita yang ditemukan, gunakan dummy
+          setArticles(DUMMY_NEWS);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil berita:", error);
+        setArticles(DUMMY_NEWS); // Gunakan cadangan jika gagal/error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
   const filteredNews = activeCategory === 'Semua' 
-    ? DUMMY_NEWS 
-    : DUMMY_NEWS.filter(news => news.category === activeCategory);
+    ? articles 
+    : articles.filter(news => news.category === activeCategory);
 
-  // Fungsi untuk mendapatkan ikon kategori
   const getCategoryIcon = (category: NewsCategory) => {
     switch (category) {
       case 'Latest News': return <Newspaper className="w-4 h-4" />;
@@ -81,7 +111,7 @@ export default function NewsTab() {
   return (
     <div className="space-y-6 pb-6 animate-fade-in">
       
-      {/* 🎯 HEADER SECTION */}
+      {/* HEADER SECTION */}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <Newspaper className="w-6 h-6 text-primary" />
@@ -92,7 +122,7 @@ export default function NewsTab() {
         </p>
       </div>
 
-      {/* 🏷️ CATEGORY FILTER BUTTONS */}
+      {/* CATEGORY FILTER BUTTONS */}
       <div className="flex overflow-x-auto pb-2 -mx-2 px-2 gap-2 snap-x scrollbar-hide">
         {(['Semua', 'Latest News', 'Heart Health Tips', 'Research Updates'] as NewsCategory[]).map((category) => (
           <button
@@ -110,9 +140,14 @@ export default function NewsTab() {
         ))}
       </div>
 
-      {/* 📰 NEWS CARDS LIST */}
+      {/* NEWS CARDS LIST */}
       <div className="space-y-5">
-        {filteredNews.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 flex flex-col items-center justify-center">
+            <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground text-sm font-medium animate-pulse">Mengambil berita kesehatan terbaru...</p>
+          </div>
+        ) : filteredNews.length > 0 ? (
           filteredNews.map((article) => (
             <div 
               key={article.id} 
@@ -120,25 +155,25 @@ export default function NewsTab() {
               onClick={() => window.open(article.url, '_blank')}
             >
               <div className="flex flex-col md:flex-row">
-                {/* Thumbnail Image */}
                 <div className="relative w-full h-48 md:w-40 md:h-auto overflow-hidden">
                   <div className="absolute inset-0 bg-primary/10 z-10 group-hover:bg-transparent transition-colors duration-300"></div>
                   <img 
                     src={article.imageUrl} 
                     alt={article.title} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      // Gambar cadangan jika link gambar dari berita aslinya rusak
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800';
+                    }}
                   />
-                  {/* Badge Kategori Terapung */}
                   <div className="absolute top-3 left-3 z-20 bg-background/90 backdrop-blur-sm text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm border border-border/50 text-foreground">
                     {getCategoryIcon(article.category)}
                     {article.category}
                   </div>
                 </div>
 
-                {/* Content Area */}
                 <div className="p-4 md:p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    {/* Source & Date */}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2.5 font-medium">
                       <span className="flex items-center gap-1">
                         <Globe className="w-3.5 h-3.5" /> {article.source}
@@ -149,7 +184,6 @@ export default function NewsTab() {
                       </span>
                     </div>
 
-                    {/* Title & Summary */}
                     <h3 className="text-base md:text-lg font-bold text-foreground leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
                       {article.title}
                     </h3>
@@ -158,7 +192,6 @@ export default function NewsTab() {
                     </p>
                   </div>
 
-                  {/* Read More Footer */}
                   <div className="mt-4 flex items-center justify-between pt-3 border-t border-border/50">
                     <span className="text-xs font-semibold text-primary flex items-center gap-1 group-hover:underline">
                       Baca selengkapnya <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
