@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 
-type NewsCategory = 'Semua' | 'Latest News' | 'Heart Health Tips' | 'Research Updates';
+// 1. Kategori sudah diubah menjadi Bahasa Indonesia
+type NewsCategory = 'Semua' | 'Berita Terbaru' | 'Tips Jantung Sehat' | 'Update Riset';
 
 interface NewsArticle {
   id: string;
@@ -14,11 +15,12 @@ interface NewsArticle {
   url: string;
 }
 
-// DUMMY DATA: Tautan (#) sudah diperbaiki menjadi tautan berita/edukasi medis asli
+// 2. DUMMY DATA Diperbanyak menjadi 7 Berita dengan Tautan Asli
 const DUMMY_NEWS: NewsArticle[] = [
+  // --- BERITA TERBARU (3 Artikel) ---
   {
     id: '1',
-    category: 'Latest News',
+    category: 'Berita Terbaru',
     title: 'Pusat Informasi Penyakit Kardiovaskular - WHO',
     summary: 'Organisasi Kesehatan Dunia (WHO) memberikan pedoman komprehensif terkait penanganan dan pencegahan risiko penyakit jantung secara global.',
     source: 'World Health Organization',
@@ -28,13 +30,67 @@ const DUMMY_NEWS: NewsArticle[] = [
   },
   {
     id: '2',
-    category: 'Heart Health Tips',
+    category: 'Berita Terbaru',
+    title: 'Kemenkes Imbau Masyarakat Cek Kolesterol Rutin Sejak Usia Muda',
+    summary: 'Kementerian Kesehatan mengingatkan bahwa serangan jantung kini makin banyak menyerang usia produktif akibat gaya hidup sedentari dan pola makan tidak sehat.',
+    source: 'Kemenkes RI',
+    date: 'Kemarin',
+    imageUrl: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?auto=format&fit=crop&q=80&w=800',
+    url: 'https://ayosehat.kemkes.go.id/'
+  },
+  {
+    id: '3',
+    category: 'Berita Terbaru',
+    title: 'Waspada, Polusi Udara Tingkatkan Risiko Serangan Jantung',
+    summary: 'Paparan polusi udara jangka panjang terbukti dapat merusak pembuluh darah dan mempercepat pembentukan plak pada arteri jantung.',
+    source: 'Halodoc',
+    date: 'Kemarin',
+    imageUrl: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.halodoc.com/artikel/kesehatan-jantung'
+  },
+
+  // --- TIPS JANTUNG SEHAT (2 Artikel) ---
+  {
+    id: '4',
+    category: 'Tips Jantung Sehat',
     title: 'Mengenal Penyakit Jantung: Gejala, Penyebab, dan Pencegahan',
     summary: 'Informasi medis terpercaya mengenai kebiasaan sehari-hari yang dapat membantu menurunkan lonjakan tekanan darah dan menjaga jantung Anda.',
     source: 'Alodokter',
     date: 'Hari ini',
     imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800',
     url: 'https://www.alodokter.com/penyakit-jantung'
+  },
+  {
+    id: '5',
+    category: 'Tips Jantung Sehat',
+    title: '5 Olahraga Ringan yang Aman dan Baik untuk Penderita Hipertensi',
+    summary: 'Tidak semua olahraga cocok untuk penderita darah tinggi. Jalan kaki, berenang, dan bersepeda santai adalah pilihan terbaik untuk melatih otot jantung tanpa membebaninya.',
+    source: 'KlikDokter',
+    date: '3 Hari yang lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.klikdokter.com/info-sehat/jantung'
+  },
+
+  // --- UPDATE RISET (2 Artikel) ---
+  {
+    id: '6',
+    category: 'Update Riset',
+    title: 'Studi Terbaru: Hubungan Pola Tidur dengan Irama Jantung Terganggu',
+    summary: 'Penelitian terbaru menunjukkan bahwa individu yang tidur kurang dari 6 jam atau lebih dari 9 jam sehari memiliki risiko lebih tinggi terkena aritmia jantung.',
+    source: 'American Heart Association',
+    date: 'Minggu lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.heart.org/'
+  },
+  {
+    id: '7',
+    category: 'Update Riset',
+    title: 'Inovasi Medis: AI Kini Bantu Dokter Deteksi Dini Penyakit Jantung',
+    summary: 'Teknologi kecerdasan buatan (Machine Learning) kini semakin akurat dalam memprediksi risiko penyakit kardiovaskular melalui rekam medis dan data EKG pasien.',
+    source: 'Medical News Today',
+    date: 'Bulan lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.medicalnewstoday.com/categories/heart-disease'
   }
 ];
 
@@ -42,68 +98,64 @@ export default function NewsTab() {
   const [activeCategory, setActiveCategory] = useState<NewsCategory>('Semua');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false); // State khusus untuk tombol Refresh
 
   // FUNGSI MESIN PENCARI BERITA OTOMATIS
-  const fetchNews = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-
-    try {
-      // ⚠️ GANTI TEKS DI BAWAH INI DENGAN API KEY DARI GNEWS.IO ANDA
-      const API_KEY = '86164a87d789a260e5f5840474cb3bc7'; 
-      
-      const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
-      const data = await response.json();
-
-      // Jika API menolak (misal: API key salah atau limit harian habis)
-      if (data.errors || !response.ok) {
-        console.warn("Peringatan API GNews:", data.errors || "Koneksi gagal");
-        setArticles(DUMMY_NEWS);
-        return;
-      }
-
-      if (data.articles && data.articles.length > 0) {
-        const fetchedNews: NewsArticle[] = data.articles.map((item: any, index: number) => {
-          const dateObj = new Date(item.publishedAt);
-          const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
-          const titleLower = item.title.toLowerCase();
-          let cat: NewsCategory = 'Latest News';
-          if (titleLower.includes('tips') || titleLower.includes('cara') || titleLower.includes('hindari')) cat = 'Heart Health Tips';
-          else if (titleLower.includes('studi') || titleLower.includes('penelitian') || titleLower.includes('ilmuwan')) cat = 'Research Updates';
-
-          return {
-            id: `api-${index}`,
-            category: cat,
-            title: item.title,
-            summary: item.description,
-            source: item.source.name,
-            date: formattedDate,
-            imageUrl: item.image || 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
-            url: item.url
-          };
-        });
-        setArticles(fetchedNews);
-      } else {
-        setArticles(DUMMY_NEWS);
-      }
-    } catch (error) {
-      console.error("Gagal mengambil berita:", error);
-      setArticles(DUMMY_NEWS);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  // Panggil saat pertama kali tab dibuka
   useEffect(() => {
+    const fetchNews = async () => {
+      setIsLoading(true);
+      try {
+        // ⚠️ PENTING: GANTI DENGAN API KEY GNEWS ANDA UNTUK MENDAPATKAN BERITA BARU SETIAP HARI
+        const API_KEY = '86164a87d789a260e5f5840474cb3bc7'; 
+        
+        // Memanggil API (Otomatis dipanggil setiap tab Berita dibuka)
+        const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
+        const data = await response.json();
+
+        // Jika API menolak (misal: API key belum diisi atau limit harian habis)
+        if (data.errors || !response.ok) {
+          console.warn("Sistem menggunakan berita cadangan (Fallback) karena:", data.errors || "Koneksi gagal");
+          setArticles(DUMMY_NEWS);
+          return;
+        }
+
+        if (data.articles && data.articles.length > 0) {
+          const fetchedNews: NewsArticle[] = data.articles.map((item: any, index: number) => {
+            const dateObj = new Date(item.publishedAt);
+            const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            const titleLower = item.title.toLowerCase();
+            let cat: NewsCategory = 'Berita Terbaru';
+            if (titleLower.includes('tips') || titleLower.includes('cara') || titleLower.includes('hindari') || titleLower.includes('makanan') || titleLower.includes('olahraga')) {
+              cat = 'Tips Jantung Sehat';
+            } else if (titleLower.includes('studi') || titleLower.includes('penelitian') || titleLower.includes('ilmuwan') || titleLower.includes('riset') || titleLower.includes('penemuan')) {
+              cat = 'Update Riset';
+            }
+
+            return {
+              id: `api-${index}`,
+              category: cat,
+              title: item.title,
+              summary: item.description,
+              source: item.source.name,
+              date: formattedDate,
+              imageUrl: item.image || 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
+              url: item.url
+            };
+          });
+          setArticles(fetchedNews);
+        } else {
+          setArticles(DUMMY_NEWS);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil berita asli:", error);
+        setArticles(DUMMY_NEWS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchNews();
-  }, [fetchNews]);
+  }, []); // Array kosong [] artinya fetchNews otomatis dipanggil saat halaman ini dibuka
 
   const filteredNews = activeCategory === 'Semua' 
     ? articles 
@@ -111,9 +163,9 @@ export default function NewsTab() {
 
   const getCategoryIcon = (category: NewsCategory) => {
     switch (category) {
-      case 'Latest News': return <Newspaper className="w-4 h-4" />;
-      case 'Heart Health Tips': return <Heart className="w-4 h-4" />;
-      case 'Research Updates': return <Stethoscope className="w-4 h-4" />;
+      case 'Berita Terbaru': return <Newspaper className="w-4 h-4" />;
+      case 'Tips Jantung Sehat': return <Heart className="w-4 h-4" />;
+      case 'Update Riset': return <Stethoscope className="w-4 h-4" />;
       default: return <Globe className="w-4 h-4" />;
     }
   };
@@ -121,34 +173,22 @@ export default function NewsTab() {
   return (
     <div className="space-y-6 pb-6 animate-fade-in">
       
-      {/* HEADER SECTION DENGAN TOMBOL REFRESH */}
+      {/* HEADER SECTION DENGAN DESAIN BERSIH */}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-sm relative overflow-hidden">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Newspaper className="w-6 h-6 text-primary" />
-              Edukasi & Berita
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed pr-10">
-              Pusat informasi Kardioku. Temukan berita terbaru, tips kesehatan, dan riset medis terkini.
-            </p>
-          </div>
-          
-          {/* TOMBOL REFRESH BARU */}
-          <button 
-            onClick={() => fetchNews(true)}
-            disabled={isRefreshing || isLoading}
-            className="p-2.5 bg-secondary hover:bg-primary/10 text-primary rounded-xl border border-primary/20 transition-all flex-shrink-0 disabled:opacity-50"
-            title="Muat ulang berita"
-          >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
+        <div>
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Newspaper className="w-6 h-6 text-primary" />
+            Edukasi & Berita
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            Pusat informasi Kardioku. Temukan berita terbaru, tips kesehatan, dan riset medis terkini.
+          </p>
         </div>
       </div>
 
       {/* CATEGORY FILTER BUTTONS */}
       <div className="flex overflow-x-auto pb-2 -mx-2 px-2 gap-2 snap-x scrollbar-hide">
-        {(['Semua', 'Latest News', 'Heart Health Tips', 'Research Updates'] as NewsCategory[]).map((category) => (
+        {(['Semua', 'Berita Terbaru', 'Tips Jantung Sehat', 'Update Riset'] as NewsCategory[]).map((category) => (
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
@@ -166,7 +206,7 @@ export default function NewsTab() {
 
       {/* NEWS CARDS LIST */}
       <div className="space-y-5">
-        {isLoading && !isRefreshing ? (
+        {isLoading ? (
           <div className="text-center py-12 flex flex-col items-center justify-center">
             <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground text-sm font-medium animate-pulse">Mengambil berita kesehatan terbaru...</p>
