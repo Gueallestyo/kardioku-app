@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 
 type NewsCategory = 'Semua' | 'Latest News' | 'Heart Health Tips' | 'Research Updates';
 
@@ -14,86 +14,96 @@ interface NewsArticle {
   url: string;
 }
 
-// DUMMY DATA sebagai cadangan (Fallback) jika internet mati atau kuota API habis
+// DUMMY DATA: Tautan (#) sudah diperbaiki menjadi tautan berita/edukasi medis asli
 const DUMMY_NEWS: NewsArticle[] = [
   {
     id: '1',
     category: 'Latest News',
-    title: 'WHO Rilis Pedoman Baru Penanganan Penyakit Kardiovaskular di Era Modern',
-    summary: 'Organisasi Kesehatan Dunia (WHO) memperbarui pedoman penanganan risiko penyakit jantung dengan fokus pada pencegahan dini dan pemantauan digital secara real-time.',
-    source: 'Medical News Today',
-    date: '9 Mar 2026',
+    title: 'Pusat Informasi Penyakit Kardiovaskular - WHO',
+    summary: 'Organisasi Kesehatan Dunia (WHO) memberikan pedoman komprehensif terkait penanganan dan pencegahan risiko penyakit jantung secara global.',
+    source: 'World Health Organization',
+    date: 'Hari ini',
     imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800',
-    url: '#'
+    url: 'https://www.who.int/health-topics/cardiovascular-diseases'
   },
   {
     id: '2',
     category: 'Heart Health Tips',
-    title: '5 Kebiasaan Pagi yang Terbukti Menjaga Tekanan Darah Tetap Stabil',
-    summary: 'Memulai hari dengan segelas air hangat dan peregangan ringan selama 10 menit dapat membantu menurunkan lonjakan tekanan darah (morning surge) yang berbahaya bagi jantung.',
-    source: 'Healthline',
-    date: '8 Mar 2026',
+    title: 'Mengenal Penyakit Jantung: Gejala, Penyebab, dan Pencegahan',
+    summary: 'Informasi medis terpercaya mengenai kebiasaan sehari-hari yang dapat membantu menurunkan lonjakan tekanan darah dan menjaga jantung Anda.',
+    source: 'Alodokter',
+    date: 'Hari ini',
     imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800',
-    url: '#'
+    url: 'https://www.alodokter.com/penyakit-jantung'
   }
 ];
 
 export default function NewsTab() {
   const [activeCategory, setActiveCategory] = useState<NewsCategory>('Semua');
-  // State untuk menyimpan berita (Awalnya kosong, lalu diisi API, atau Dummy jika gagal)
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false); // State khusus untuk tombol Refresh
 
   // FUNGSI MESIN PENCARI BERITA OTOMATIS
-  useEffect(() => {
-    const fetchNews = async () => {
+  const fetchNews = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+      setIsRefreshing(true);
+    } else {
       setIsLoading(true);
-      try {
-        // ⚠️ GANTI TEKS DI BAWAH INI DENGAN API KEY DARI GNEWS.IO ANDA
-        const API_KEY = 'e0ccd1c0add77732e62f7fb88f42171e'; 
-        
-        // Memanggil API (Mencari berita tentang jantung/kardiovaskular dalam bahasa Indonesia)
-        const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
-        const data = await response.json();
+    }
 
-        if (data.articles && data.articles.length > 0) {
-          const fetchedNews: NewsArticle[] = data.articles.map((item: any, index: number) => {
-            // Ubah format tanggal API menjadi format yang rapi
-            const dateObj = new Date(item.publishedAt);
-            const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    try {
+      // ⚠️ GANTI TEKS DI BAWAH INI DENGAN API KEY DARI GNEWS.IO ANDA
+      const API_KEY = '86164a87d789a260e5f5840474cb3bc7'; 
+      
+      const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
+      const data = await response.json();
 
-            // Trik Kategori Otomatis berdasarkan kata kunci di judul
-            const titleLower = item.title.toLowerCase();
-            let cat: NewsCategory = 'Latest News';
-            if (titleLower.includes('tips') || titleLower.includes('cara') || titleLower.includes('hindari')) cat = 'Heart Health Tips';
-            else if (titleLower.includes('studi') || titleLower.includes('penelitian') || titleLower.includes('ilmuwan')) cat = 'Research Updates';
-
-            return {
-              id: `api-${index}`,
-              category: cat,
-              title: item.title,
-              summary: item.description,
-              source: item.source.name,
-              date: formattedDate,
-              imageUrl: item.image || 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
-              url: item.url
-            };
-          });
-          setArticles(fetchedNews);
-        } else {
-          // Jika tidak ada berita yang ditemukan, gunakan dummy
-          setArticles(DUMMY_NEWS);
-        }
-      } catch (error) {
-        console.error("Gagal mengambil berita:", error);
-        setArticles(DUMMY_NEWS); // Gunakan cadangan jika gagal/error
-      } finally {
-        setIsLoading(false);
+      // Jika API menolak (misal: API key salah atau limit harian habis)
+      if (data.errors || !response.ok) {
+        console.warn("Peringatan API GNews:", data.errors || "Koneksi gagal");
+        setArticles(DUMMY_NEWS);
+        return;
       }
-    };
 
-    fetchNews();
+      if (data.articles && data.articles.length > 0) {
+        const fetchedNews: NewsArticle[] = data.articles.map((item: any, index: number) => {
+          const dateObj = new Date(item.publishedAt);
+          const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+          const titleLower = item.title.toLowerCase();
+          let cat: NewsCategory = 'Latest News';
+          if (titleLower.includes('tips') || titleLower.includes('cara') || titleLower.includes('hindari')) cat = 'Heart Health Tips';
+          else if (titleLower.includes('studi') || titleLower.includes('penelitian') || titleLower.includes('ilmuwan')) cat = 'Research Updates';
+
+          return {
+            id: `api-${index}`,
+            category: cat,
+            title: item.title,
+            summary: item.description,
+            source: item.source.name,
+            date: formattedDate,
+            imageUrl: item.image || 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
+            url: item.url
+          };
+        });
+        setArticles(fetchedNews);
+      } else {
+        setArticles(DUMMY_NEWS);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil berita:", error);
+      setArticles(DUMMY_NEWS);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  // Panggil saat pertama kali tab dibuka
+  useEffect(() => {
+    fetchNews();
+  }, [fetchNews]);
 
   const filteredNews = activeCategory === 'Semua' 
     ? articles 
@@ -111,15 +121,29 @@ export default function NewsTab() {
   return (
     <div className="space-y-6 pb-6 animate-fade-in">
       
-      {/* HEADER SECTION */}
-      <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Newspaper className="w-6 h-6 text-primary" />
-          Edukasi & Berita
-        </h2>
-        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Pusat informasi Kardioku. Temukan berita terbaru, tips kesehatan, dan riset medis terkini untuk menjaga jantung Anda tetap sehat.
-        </p>
+      {/* HEADER SECTION DENGAN TOMBOL REFRESH */}
+      <div className="bg-card border border-border rounded-2xl p-5 shadow-sm relative overflow-hidden">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Newspaper className="w-6 h-6 text-primary" />
+              Edukasi & Berita
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed pr-10">
+              Pusat informasi Kardioku. Temukan berita terbaru, tips kesehatan, dan riset medis terkini.
+            </p>
+          </div>
+          
+          {/* TOMBOL REFRESH BARU */}
+          <button 
+            onClick={() => fetchNews(true)}
+            disabled={isRefreshing || isLoading}
+            className="p-2.5 bg-secondary hover:bg-primary/10 text-primary rounded-xl border border-primary/20 transition-all flex-shrink-0 disabled:opacity-50"
+            title="Muat ulang berita"
+          >
+            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* CATEGORY FILTER BUTTONS */}
@@ -142,7 +166,7 @@ export default function NewsTab() {
 
       {/* NEWS CARDS LIST */}
       <div className="space-y-5">
-        {isLoading ? (
+        {isLoading && !isRefreshing ? (
           <div className="text-center py-12 flex flex-col items-center justify-center">
             <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground text-sm font-medium animate-pulse">Mengambil berita kesehatan terbaru...</p>
@@ -162,7 +186,6 @@ export default function NewsTab() {
                     alt={article.title} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     onError={(e) => {
-                      // Gambar cadangan jika link gambar dari berita aslinya rusak
                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800';
                     }}
                   />
