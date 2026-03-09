@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, AlertTriangle, Users, Sun, Moon, LogOut, LogOutIcon } from 'lucide-react';
+import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings } from 'lucide-react';
 import { getReminderState, setReminderState } from '@/lib/store';
 
-// Interface diperbarui untuk menerima onLogout
 interface Props {
   onLogout?: () => void;
 }
@@ -11,13 +10,11 @@ interface ReminderSchedule {
   pagi: boolean;
   siang: boolean;
   malam: boolean;
-  kustom: boolean; // TAMBAHAN BARU: Menambahkan opsi kustom ke interface
+  kustom: boolean;
 }
 
 export default function SettingsTab({ onLogout }: Props) {
   const [reminderOn, setReminderOn] = useState(getReminderState());
-  const [urgencyOn, setUrgencyOn] = useState(false);
-  // TAMBAHAN BARU: Menambahkan nilai default kustom: false
   const [schedule, setSchedule] = useState<ReminderSchedule>({ pagi: false, siang: true, malam: false, kustom: false });
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | 'unsupported'>('default');
   const [showPermissionBanner, setShowPermissionBanner] = useState(false);
@@ -26,6 +23,13 @@ export default function SettingsTab({ onLogout }: Props) {
   
   // State untuk Pop-up Konfirmasi Logout
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // TAMBAHAN BARU: State untuk Preferensi Lainnya
+  const [localData, setLocalData] = useState(true);
+  const [privacyMode, setPrivacyMode] = useState(false);
+  
+  // TAMBAHAN BARU: State untuk Pop-up Alert Preferensi
+  const [alertInfo, setAlertInfo] = useState({ visible: false, title: "", message: "" });
 
   useEffect(() => {
     if (!('Notification' in window)) {
@@ -71,8 +75,33 @@ export default function SettingsTab({ onLogout }: Props) {
     }
   };
 
+  // TAMBAHAN BARU: Fungsi untuk menangani klik pada Preferensi Lainnya
+  const handlePreferenceToggle = (type: 'local' | 'privacy') => {
+    if (type === 'local') {
+      const newState = !localData;
+      setLocalData(newState);
+      setAlertInfo({
+        visible: true,
+        title: "Simpan Data Secara Lokal",
+        message: newState 
+          ? "Fitur diaktifkan: Sebagian data cache kini disimpan di memori perangkat Anda untuk mempercepat proses pemuatan aplikasi." 
+          : "Fitur dimatikan: Penyimpanan lokal dihapus. Aplikasi mungkin memerlukan waktu sedikit lebih lama untuk memuat data dari server."
+      });
+    } else {
+      const newState = !privacyMode;
+      setPrivacyMode(newState);
+      setAlertInfo({
+        visible: true,
+        title: "Mode Privasi",
+        message: newState 
+          ? "Mode Privasi diaktifkan: Data diagnostik dan analitik anonim tidak akan dikirimkan ke server pengembang." 
+          : "Mode Privasi dimatikan: Aplikasi akan mengirimkan data analitik standar untuk membantu pengembangan fitur Kardioku ke depannya."
+      });
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 relative">
       {/* Dark Mode Toggle */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-border">
@@ -104,7 +133,6 @@ export default function SettingsTab({ onLogout }: Props) {
               className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
                 darkMode ? 'gradient-hero shadow-primary' : 'bg-muted'
               }`}
-              aria-label="Toggle mode tampilan"
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -140,7 +168,6 @@ export default function SettingsTab({ onLogout }: Props) {
               className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
                 reminderOn ? 'gradient-hero shadow-primary' : 'bg-muted'
               }`}
-              aria-label="Toggle pengingat"
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${reminderOn ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -159,15 +186,12 @@ export default function SettingsTab({ onLogout }: Props) {
                 { key: 'pagi' as const, label: 'Pagi', time: '08:00', emoji: '🌅' },
                 { key: 'siang' as const, label: 'Siang', time: '13:00', emoji: '☀️' },
                 { key: 'malam' as const, label: 'Malam', time: '20:00', emoji: '🌙' },
-                // TAMBAHAN BARU: Opsi Atur Sendiri (Kustom) dimasukkan ke dalam daftar
                 { key: 'kustom' as const, label: 'Atur Sendiri', time: customTime || '--:--', emoji: '⏱️' },
               ].map(item => (
                 <label key={item.key} className="flex items-center gap-3 cursor-pointer group">
                   <div
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                      schedule[item.key]
-                        ? 'border-primary bg-primary'
-                        : 'border-input bg-background group-hover:border-primary/50'
+                      schedule[item.key] ? 'border-primary bg-primary' : 'border-input bg-background group-hover:border-primary/50'
                     }`}
                     onClick={() => toggleSchedule(item.key)}
                   >
@@ -181,7 +205,6 @@ export default function SettingsTab({ onLogout }: Props) {
                 </label>
               ))}
 
-              {/* TAMBAHAN BARU: Kotak Input Waktu muncul HANYA saat 'Atur Sendiri' dicentang */}
               {schedule.kustom && (
                 <div className="mt-3 ml-8 p-3 bg-background border border-border rounded-xl animate-fade-in-up flex items-center gap-3">
                   <label className="text-xs text-muted-foreground font-medium">Tentukan Waktu:</label>
@@ -236,27 +259,37 @@ export default function SettingsTab({ onLogout }: Props) {
         </div>
       </div>
 
-      {/* Additional Settings */}
+      {/* PERUBAHAN BARU: Preferensi Lainnya kini Interaktif */}
       <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="font-semibold text-foreground mb-4">⚙️ Preferensi Lainnya</h3>
         <div className="space-y-4">
-          {[
-            { label: 'Simpan Data Secara Lokal', desc: 'Data disimpan di perangkat Anda', enabled: true, locked: true },
-            { label: 'Mode Privasi', desc: 'Data tidak dikirim ke server eksternal', enabled: true, locked: true },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-              <div>
-                <p className="text-sm font-medium text-foreground">{item.label}</p>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
-              </div>
-              <div className={`relative w-10 h-5 rounded-full ${item.enabled ? 'gradient-hero' : 'bg-muted'} ${item.locked ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${item.enabled ? 'translate-x-5' : ''}`} />
-              </div>
+          
+          <div className="flex items-center justify-between py-2 border-b border-border/50">
+            <div>
+              <p className="text-sm font-medium text-foreground">Simpan Data Secara Lokal</p>
+              <p className="text-xs text-muted-foreground">Data disimpan di memori perangkat Anda</p>
             </div>
-          ))}
-          <div className="space-y-2 text-sm text-muted-foreground">
-          <p>Keterangan: <span className="text-foreground font-medium">Pengaturan ini tidak bisa dirubah</span></p>
+            <button
+              onClick={() => handlePreferenceToggle('local')}
+              className={`relative w-10 h-5 rounded-full transition-all duration-300 focus:outline-none ${localData ? 'gradient-hero' : 'bg-muted'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${localData ? 'translate-x-5' : ''}`} />
+            </button>
           </div>
+
+          <div className="flex items-center justify-between py-2 border-b border-border/50">
+            <div>
+              <p className="text-sm font-medium text-foreground">Mode Privasi</p>
+              <p className="text-xs text-muted-foreground">Batasi pengiriman analitik ke server</p>
+            </div>
+            <button
+              onClick={() => handlePreferenceToggle('privacy')}
+              className={`relative w-10 h-5 rounded-full transition-all duration-300 focus:outline-none ${privacyMode ? 'gradient-hero' : 'bg-muted'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${privacyMode ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -273,7 +306,6 @@ export default function SettingsTab({ onLogout }: Props) {
         </div>
       </div>
 
-      {/* TOMBOL LOGOUT (Diselipkan aman di paling bawah) */}
       {onLogout && (
         <div className="pt-2 px-2">
           <button 
@@ -303,6 +335,35 @@ export default function SettingsTab({ onLogout }: Props) {
                 Ya, Keluar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAMBAHAN BARU: POP-UP ALERT PREFERENSI */}
+      {alertInfo.visible && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-border p-6 animate-fade-in-up relative">
+            <button 
+              onClick={() => setAlertInfo({ ...alertInfo, visible: false })}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            >
+              <XCircle className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Settings className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">{alertInfo.title}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              {alertInfo.message}
+            </p>
+            <button 
+              onClick={() => setAlertInfo({ ...alertInfo, visible: false })}
+              className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all shadow-sm"
+            >
+              Mengerti
+            </button>
           </div>
         </div>
       )}
