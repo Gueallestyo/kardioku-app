@@ -1,0 +1,36 @@
+name: Sync Backend to Hugging Face
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Backend/**'
+
+jobs:
+  sync-to-hf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode dari GitHub
+        uses: actions/checkout@v3
+
+      - name: Kirim folder Backend ke Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "bot@kardioku.com"
+          git config --global user.name "Robot Kardioku"
+          
+          # 1. Kloning ruang Hugging Face ke folder sementara
+          git clone https://Allestyo:$HF_TOKEN@huggingface.co/spaces/Allestyo/api-kardioku hf_space
+          
+          # 2. Hapus file lama di Hugging Face (kecuali folder sistem .git)
+          cd hf_space
+          rm -rf *
+          
+          # 3. Salin isi folder Backend dari GitHub ke Hugging Face
+          cp -r ../Backend/* .
+          
+          # 4. Simpan dan luncurkan ke Hugging Face
+          git add .
+          git commit -m "Auto-sync update Backend dari GitHub Actions" || echo "Tidak ada perubahan"
+          git push https://Allestyo:$HF_TOKEN@huggingface.co/spaces/Allestyo/api-kardioku main
