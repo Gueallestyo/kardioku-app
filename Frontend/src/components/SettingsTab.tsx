@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings } from 'lucide-react';
 import { getReminderState, setReminderState } from '@/lib/store';
+import OneSignal from 'react-onesignal';
 
 interface Props {
   onLogout?: () => void;
@@ -24,11 +25,11 @@ export default function SettingsTab({ onLogout }: Props) {
   // State untuk Pop-up Konfirmasi Logout
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // TAMBAHAN BARU: State untuk Preferensi Lainnya
+  // State untuk Preferensi Lainnya
   const [localData, setLocalData] = useState(true);
   const [privacyMode, setPrivacyMode] = useState(false);
   
-  // TAMBAHAN BARU: State untuk Pop-up Alert Preferensi
+  // State untuk Pop-up Alert Preferensi
   const [alertInfo, setAlertInfo] = useState({ visible: false, title: "", message: "" });
 
   useEffect(() => {
@@ -44,23 +45,34 @@ export default function SettingsTab({ onLogout }: Props) {
     setReminderOn(newVal);
     setReminderState(newVal);
 
-    if (newVal && permissionStatus !== 'granted' && permissionStatus !== 'unsupported') {
+    if (newVal) {
+      // Memanggil pop-up resmi dari OneSignal untuk meminta izin
+      await OneSignal.Slidedown.promptPush();
+      
+      // Mengirimkan Tag (Label) ke server OneSignal bahwa user ini aktif
+      OneSignal.User.addTag("pengingat_aktif", "true");
       setShowPermissionBanner(true);
-      if ('Notification' in window && Notification.permission === 'default') {
-        const result = await Notification.requestPermission();
-        setPermissionStatus(result);
-        if (result === 'granted') {
-          new Notification('Kardioku — Pengingat Aktif! 🏥', {
-            body: 'Pengingat pemeriksaan berhasil diaktifkan.',
-            icon: '/favicon.ico',
-          });
-        }
-      }
+      setPermissionStatus('granted');
+    } else {
+      // Jika dimatikan, hapus labelnya dari server
+      OneSignal.User.addTag("pengingat_aktif", "false");
     }
   };
 
   const toggleSchedule = (key: keyof ReminderSchedule) => {
-    setSchedule(prev => ({ ...prev, [key]: !prev[key] }));
+    setSchedule(prev => {
+      const newState = !prev[key];
+      
+      // TAMBAHAN BARU: Mengirim waktu yang dipilih ke server OneSignal
+      if (newState) {
+        if (key === 'pagi') OneSignal.User.addTag("waktu_pengingat", "08:00");
+        if (key === 'siang') OneSignal.User.addTag("waktu_pengingat", "13:00");
+        if (key === 'malam') OneSignal.User.addTag("waktu_pengingat", "20:00");
+        if (key === 'kustom' && customTime) OneSignal.User.addTag("waktu_pengingat", customTime);
+      }
+      
+      return { ...prev, [key]: newState };
+    });
   };
 
   const handleDarkModeToggle = () => {
@@ -75,7 +87,7 @@ export default function SettingsTab({ onLogout }: Props) {
     }
   };
 
-  // TAMBAHAN BARU: Fungsi untuk menangani klik pada Preferensi Lainnya
+  // Fungsi untuk menangani klik pada Preferensi Lainnya
   const handlePreferenceToggle = (type: 'local' | 'privacy') => {
     if (type === 'local') {
       const newState = !localData;
@@ -211,7 +223,14 @@ export default function SettingsTab({ onLogout }: Props) {
                   <input
                     type="time"
                     value={customTime}
-                    onChange={(e) => setCustomTime(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomTime(val);
+                      // TAMBAHAN BARU: Otomatis kirim tag ke OneSignal saat jam kustom diubah
+                      if (val) {
+                        OneSignal.User.addTag("waktu_pengingat", val);
+                      }
+                    }}
                     className="bg-transparent border border-input rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-all"
                   />
                 </div>
@@ -259,7 +278,7 @@ export default function SettingsTab({ onLogout }: Props) {
         </div>
       </div>
 
-      {/* PERUBAHAN BARU: Preferensi Lainnya kini Interaktif */}
+      {/* Preferensi Lainnya */}
       <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="font-semibold text-foreground mb-4">⚙️ Preferensi Lainnya</h3>
         <div className="space-y-4">
@@ -339,7 +358,7 @@ export default function SettingsTab({ onLogout }: Props) {
         </div>
       )}
 
-      {/* TAMBAHAN BARU: POP-UP ALERT PREFERENSI */}
+      {/* POP-UP ALERT PREFERENSI */}
       {alertInfo.visible && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-border p-6 animate-fade-in-up relative">

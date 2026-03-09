@@ -8,6 +8,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import kardiokuLogoHati from '@/assets/kardio_logo.png';
+import OneSignal from 'react-onesignal';
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,10 @@ export default function App() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    OneSignal.init({
+    appId: "3b19f501-d74d-42f5-a41c-aff4fce9ceeb",
+    allowLocalhostAsSecureOrigin: true 
+  });
   }, []);
 
   const [screen, setScreen] = useState<AppScreen>('auth');
