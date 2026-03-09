@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Heart, Activity, ClipboardList, Settings, ShieldCheck, Cloud, Edit2, Calendar, Ruler, Weight, X, Info, User, AlertCircle, Clock } from 'lucide-react';
+import { Heart, Activity, ClipboardList, Settings, ShieldCheck, Cloud, Edit2, Calendar, Ruler, Weight, X, Info, User, AlertCircle, Clock, Newspaper } from 'lucide-react';
 import { UserProfile, AssessmentRecord, getAssessments, updateUserProfile, setCurrentUser as setGlobalUser } from '@/lib/store';
 import AssessmentTab from '@/components/AssessmentTab';
 import HistoryTab from '@/components/HistoryTab';
 import SettingsTab from '@/components/SettingsTab'; 
+// TAMBAHAN BARU V2.0.0: Import komponen NewsTab
+import NewsTab from '@/components/NewsTab'; 
 import axios from 'axios';
 
 // --- IMPORT LOGO KARDIOKU ---
@@ -14,9 +16,11 @@ interface Props {
   onLogout: () => void;
 }
 
+// TAMBAHAN BARU V2.0.0: Menambahkan tab 'berita' ke dalam susunan menu
 const TABS = [
   { id: 'pemeriksaan', label: 'Pemeriksaan', icon: Activity },
   { id: 'riwayat', label: 'Riwayat & Laporan', icon: ClipboardList },
+  { id: 'berita', label: 'Edukasi & Berita', icon: Newspaper },
   { id: 'pengaturan', label: 'Pengaturan', icon: Settings },
 ] as const;
 
@@ -395,9 +399,13 @@ export default function Dashboard({ user, onLogout }: Props) {
               <h2 className="text-xl font-bold text-foreground">Riwayat & Laporan Kesehatan</h2>
               <p className="text-sm text-muted-foreground mt-0.5">Pantau perkembangan kondisi kardiovaskular Anda dari waktu ke waktu.</p>
             </div>
-            {/* PERBAIKAN PENTING 4: Mengembalikan props records dan user ke HistoryTab */}
-            <HistoryTab records={records} user={currentUser} />
+            <HistoryTab user={currentUser} />
           </div>
+        )}
+        
+        {/* TAMBAHAN BARU V2.0.0: Menampilkan komponen NewsTab saat tab 'berita' aktif */}
+        {activeTab === 'berita' && (
+          <NewsTab />
         )}
         
         {activeTab === 'pengaturan' && (
