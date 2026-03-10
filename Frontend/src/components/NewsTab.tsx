@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Newspaper, Heart, Stethoscope, Calendar, Globe, ExternalLink, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 
 type NewsCategory = 'Semua' | 'Berita Terbaru' | 'Tips Jantung Sehat' | 'Update Riset';
@@ -14,9 +14,9 @@ interface NewsArticle {
   url: string;
 }
 
-// DUMMY DATA: Diperbanyak menjadi 10 Berita dengan Tautan Asli
+// DUMMY DATA: Diperbanyak menjadi 15 Berita dengan Tautan Asli
 const DUMMY_NEWS: NewsArticle[] = [
-  // --- BERITA TERBARU (4 Artikel) ---
+  // --- BERITA TERBARU (5 Artikel) ---
   {
     id: '1',
     category: 'Berita Terbaru',
@@ -57,8 +57,18 @@ const DUMMY_NEWS: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&q=80&w=800',
     url: 'https://health.detik.com/'
   },
+  {
+    id: '11',
+    category: 'Berita Terbaru',
+    title: 'Angka Harapan Hidup Pasien Jantung di Asia Tenggara Meningkat',
+    summary: 'Laporan terbaru menunjukkan adanya peningkatan fasilitas kesehatan dan penanganan kegawatdaruratan kardiovaskular yang sukses menekan angka fatalitas.',
+    source: 'Kemenkes RI',
+    date: '3 Hari yang lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800',
+    url: 'https://ayosehat.kemkes.go.id/'
+  },
 
-  // --- TIPS JANTUNG SEHAT (3 Artikel) ---
+  // --- TIPS JANTUNG SEHAT (5 Artikel) ---
   {
     id: '4',
     category: 'Tips Jantung Sehat',
@@ -89,8 +99,28 @@ const DUMMY_NEWS: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80&w=800',
     url: 'https://hellosehat.com/jantung/'
   },
+  {
+    id: '12',
+    category: 'Tips Jantung Sehat',
+    title: 'Pentingnya Tertawa: Bagaimana Hormon Bahagia Melindungi Jantung',
+    summary: 'Tahukah Anda bahwa tertawa dapat memperlebar pembuluh darah dan meningkatkan aliran darah hingga 22%? Ini adalah cara termudah menjaga kesehatan jantung.',
+    source: 'Halodoc',
+    date: '5 Hari yang lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.halodoc.com/artikel/kesehatan-jantung'
+  },
+  {
+    id: '13',
+    category: 'Tips Jantung Sehat',
+    title: 'Mitos atau Fakta: Apakah Kopi Hitam Berbahaya Bagi Jantung?',
+    summary: 'Banyak yang khawatir minum kopi memicu jantung berdebar. Padahal, konsumsi kopi hitam tanpa gula dalam batas wajar justru kaya antioksidan yang baik untuk kardiovaskular.',
+    source: 'KlikDokter',
+    date: '1 Minggu yang lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.klikdokter.com/info-sehat/jantung'
+  },
 
-  // --- UPDATE RISET (3 Artikel) ---
+  // --- UPDATE RISET (5 Artikel) ---
   {
     id: '6',
     category: 'Update Riset',
@@ -120,6 +150,26 @@ const DUMMY_NEWS: NewsArticle[] = [
     date: '2 Bulan lalu',
     imageUrl: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&q=80&w=800',
     url: 'https://www.ncbi.nlm.nih.gov/'
+  },
+  {
+    id: '14',
+    category: 'Update Riset',
+    title: 'Terapi Genetik Berhasil Sembuhkan Kerusakan Otot Jantung',
+    summary: 'Uji klinis tahap kedua menemukan bahwa metode injeksi genetik tertentu mampu meregenerasi sel otot jantung yang rusak pasca terjadinya infark miokard.',
+    source: 'Nature Medicine',
+    date: '3 Bulan lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.nature.com/nm/'
+  },
+  {
+    id: '15',
+    category: 'Update Riset',
+    title: 'Diet Nabati Terbukti Turunkan Risiko Penyumbatan Arteri hingga 30%',
+    summary: 'Riset dari Universitas Harvard membuktikan bahwa peralihan ke pola makan berbasis tanaman secara signifikan membersihkan penumpukan plak pada pembuluh darah dalam 5 tahun.',
+    source: 'Harvard Health',
+    date: '4 Bulan lalu',
+    imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800',
+    url: 'https://www.health.harvard.edu/topics/heart-health'
   }
 ];
 
@@ -127,6 +177,11 @@ export default function NewsTab() {
   const [activeCategory, setActiveCategory] = useState<NewsCategory>('Semua');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State dan Ref untuk fitur Animasi Batas Bawah
+  const [showEndIndicator, setShowEndIndicator] = useState(false);
+  const bottomBoundaryRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // FUNGSI MESIN PENCARI BERITA OTOMATIS
   useEffect(() => {
@@ -134,13 +189,11 @@ export default function NewsTab() {
       setIsLoading(true);
       try {
         // ⚠️ PENTING: GANTI DENGAN API KEY GNEWS ANDA UNTUK MENDAPATKAN BERITA BARU SETIAP HARI
-        const API_KEY = '86164a87d789a260e5f5840474cb3bc7'; 
+        const API_KEY = 'MASUKKAN_API_KEY_GNEWS_ANDA_DISINI'; 
         
-        // Memanggil API (Otomatis dipanggil setiap tab Berita dibuka)
         const response = await fetch(`https://gnews.io/api/v4/search?q=jantung+OR+kardiovaskular+OR+kolesterol&lang=id&max=10&apikey=${API_KEY}`);
         const data = await response.json();
 
-        // Jika API menolak (misal: API key belum diisi atau limit harian habis)
         if (data.errors || !response.ok) {
           console.warn("Sistem menggunakan berita cadangan (Fallback) karena:", data.errors || "Koneksi gagal");
           setArticles(DUMMY_NEWS);
@@ -186,6 +239,34 @@ export default function NewsTab() {
     fetchNews();
   }, []);
 
+  // FUNGSI SENSOR BATAS BAWAH (Intersection Observer)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Jika sensor gaib menyentuh layar bawah
+        if (entries[0].isIntersecting) {
+          setShowEndIndicator(true); // Munculkan tulisan
+          
+          // Bersihkan timer lama jika ada, lalu buat timer baru untuk menyembunyikan tulisan setelah 2 detik
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => {
+            setShowEndIndicator(false);
+          }, 2000); 
+        }
+      },
+      { threshold: 0.1 } // Sensitivitas sensor
+    );
+
+    if (bottomBoundaryRef.current) {
+      observer.observe(bottomBoundaryRef.current);
+    }
+
+    return () => {
+      if (bottomBoundaryRef.current) observer.unobserve(bottomBoundaryRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [articles, activeCategory]); // Restart sensor saat artikel atau filter berubah
+
   const filteredNews = activeCategory === 'Semua' 
     ? articles 
     : articles.filter(news => news.category === activeCategory);
@@ -200,9 +281,9 @@ export default function NewsTab() {
   };
 
   return (
-    <div className="space-y-6 pb-6 animate-fade-in">
+    <div className="space-y-6 pb-6 animate-fade-in relative">
       
-      {/* HEADER SECTION DENGAN DESAIN BERSIH */}
+      {/* HEADER SECTION */}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-sm relative overflow-hidden">
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -296,11 +377,14 @@ export default function NewsTab() {
               </div>
             ))}
 
-            {/* BATAS BAWAH (End-of-List Indicator) */}
-            <div className="py-8 text-center animate-fade-in-up">
-              <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-secondary/60 border border-border/50">
+            {/* SENSOR GAIB UNTUK MEMICU ANIMASI BATAS BAWAH */}
+            <div ref={bottomBoundaryRef} className="h-4 w-full mt-2" aria-hidden="true"></div>
+
+            {/* INDIKATOR BATAS BAWAH (ANIMASI MUNCUL & HILANG) */}
+            <div className={`py-2 text-center transition-all duration-500 ease-in-out ${showEndIndicator ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+              <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border shadow-sm backdrop-blur-sm">
                 <CheckCircle className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">Semua berita telah dimuat</span>
+                <span className="text-xs font-semibold text-muted-foreground">Semua berita telah dimuat</span>
               </div>
             </div>
           </>
