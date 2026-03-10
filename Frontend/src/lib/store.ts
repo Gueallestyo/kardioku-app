@@ -76,7 +76,8 @@ export function updateUserProfile(username: string, profile: Partial<UserProfile
 // --- Assessments ---
 export function getAssessments(username: string): AssessmentRecord[] {
   const raw = localStorage.getItem(`${STORAGE_KEYS.ASSESSMENTS}_${username}`);
-  return raw ? JSON.parse(raw) : getMockAssessments();
+  // PERBAIKAN: Mengembalikan array kosong [] jika belum ada data, bukan data acak
+  return raw ? JSON.parse(raw) : [];
 }
 
 export function saveAssessment(username: string, record: AssessmentRecord) {
@@ -85,24 +86,7 @@ export function saveAssessment(username: string, record: AssessmentRecord) {
   localStorage.setItem(`${STORAGE_KEYS.ASSESSMENTS}_${username}`, JSON.stringify(updated));
 }
 
-function getMockAssessments(): AssessmentRecord[] {
-  const days = ['2025-02-14', '2025-02-15', '2025-02-16', '2025-02-17', '2025-02-18', '2025-02-19', '2025-02-20'];
-  const levels: Array<'Rendah' | 'Sedang' | 'Tinggi'> = ['Rendah', 'Rendah', 'Sedang', 'Rendah', 'Rendah', 'Sedang', 'Rendah'];
-  return days.map((d, i) => ({
-    id: `mock-${i}`,
-    tanggal: d,
-    sistolik: 110 + Math.floor(Math.random() * 25),
-    diastolik: 70 + Math.floor(Math.random() * 15),
-    kolesterol: 1,
-    glukosa: 1,
-    merokok: 0,
-    alkohol: 0,
-    aktivitasFisik: 1,
-    bmi: 22.5,
-    riskScore: 20 + i * 5,
-    riskLevel: levels[i],
-  }));
-}
+// FUNGSI getMockAssessments() TELAH DIHAPUS KARENA MENYEBABKAN DATA DESYNCHRONIZATION
 
 // --- Reminder ---
 export function getReminderState(): boolean {
