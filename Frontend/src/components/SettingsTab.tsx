@@ -317,7 +317,7 @@ export default function SettingsTab({ onLogout }: Props) {
         <h3 className="font-semibold text-foreground mb-3">ℹ️ Tentang Kardioku</h3>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>Developer: <span className="text-foreground font-medium">Allestyo</span></p>
-          <p>Versi: <span className="text-foreground font-medium">1.0.0</span></p>
+          <p>Versi: <span className="text-foreground font-medium">v2.1.0</span></p>
           <p>Algoritma Berbasis: <span className="text-foreground font-medium">Model Framingham Heart Study</span></p>
           <div className="mt-3 p-3 bg-warning-light border border-warning/20 rounded-lg text-xs text-warning">
             ⚠️ <strong>Disclaimer:</strong> Kardioku adalah alat skrining awal dan bukan pengganti diagnosis medis profesional. Selalu konsultasikan hasil pemeriksaan dengan dokter atau tenaga medis yang kompeten.
