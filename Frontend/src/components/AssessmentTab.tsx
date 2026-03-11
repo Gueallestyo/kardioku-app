@@ -208,7 +208,6 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
             </span>
           </div>
           
-          {/* Komponen Jarum Gauge yang Sudah Diperbaiki Labelnya */}
           <RiskGauge score={result.riskScore} level={result.riskLevel} />
           
           <div className="text-center mt-2 pb-4">
@@ -282,27 +281,64 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
         </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-primary" /> Tanda Vital <span className="text-destructive">*</span>
+      {/* --- DESAIN TANDA VITAL YANG DIPERBARUI --- */}
+      <div className="relative">
+        <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+          <Activity className="w-5 h-5 text-primary" />
+          Tanda Vital (Tekanan Darah) <span className="text-destructive">*</span>
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Tekanan Sistolik</p>
-            <div className="flex items-end gap-1">
-              <input type="number" value={sistolik} onChange={e => setSistolik(e.target.value)} placeholder="0" min={60} max={300} required className="w-full text-2xl font-bold text-foreground bg-transparent border-b-2 border-primary/30 focus:border-primary outline-none pb-1 transition-colors" />
+        
+        {/* Container Utama Tanda Vital */}
+        <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-card to-primary/5 border-2 border-primary/20 rounded-2xl shadow-sm relative overflow-hidden">
+          {/* Efek Latar Belakang */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+
+          {/* Sistolik */}
+          <div className="group space-y-2 relative z-10">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Sistolik</label>
+            <div className="relative bg-background border border-border rounded-xl px-4 py-3 shadow-inner focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+              <div className="flex items-end gap-2">
+                <input 
+                  type="number" 
+                  value={sistolik} 
+                  onChange={e => setSistolik(e.target.value)} 
+                  placeholder="120" 
+                  min={60} max={300} required 
+                  className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
+                />
+              </div>
+              <div className="absolute right-3 bottom-3 flex items-center gap-1 text-muted-foreground/40 group-focus-within:text-primary transition-colors">
+                <Heart className="w-4 h-4" />
+                <span className="text-xs font-semibold">mmHg</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">mmHg</p>
+            <p className="text-[10px] text-muted-foreground/70">Saat jantung berdetak (atas)</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Tekanan Diastolik</p>
-            <div className="flex items-end gap-1">
-              <input type="number" value={diastolik} onChange={e => setDiastolik(e.target.value)} placeholder="0" min={40} max={200} required className="w-full text-2xl font-bold text-foreground bg-transparent border-b-2 border-primary/30 focus:border-primary outline-none pb-1 transition-colors" />
+
+          {/* Diastolik */}
+          <div className="group space-y-2 relative z-10">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Diastolik</label>
+            <div className="relative bg-background border border-border rounded-xl px-4 py-3 shadow-inner focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+              <div className="flex items-end gap-2">
+                <input 
+                  type="number" 
+                  value={diastolik} 
+                  onChange={e => setDiastolik(e.target.value)} 
+                  placeholder="80" 
+                  min={40} max={200} required 
+                  className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
+                />
+              </div>
+              <div className="absolute right-3 bottom-3 flex items-center gap-1 text-muted-foreground/40 group-focus-within:text-primary transition-colors">
+                <Activity className="w-4 h-4" />
+                <span className="text-xs font-semibold">mmHg</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">mmHg</p>
+            <p className="text-[10px] text-muted-foreground/70">Saat jantung istirahat (bawah)</p>
           </div>
         </div>
       </div>
+      {/* ------------------------------------------- */}
 
       <div className="border border-border rounded-xl overflow-hidden">
         <button type="button" onClick={() => setAccordionOpen(!accordionOpen)} className="w-full flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors text-left">
