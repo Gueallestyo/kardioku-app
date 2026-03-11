@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings, Trash2, AlertTriangle } from 'lucide-react';
-import { getReminderState, setReminderState, getCurrentUser } from '@/lib/store';
+import { getReminderState, setReminderState, getCurrentUser, deleteUserAccount } from '@/lib/store';
 import OneSignal from 'react-onesignal';
 import axios from 'axios';
 
@@ -103,7 +103,7 @@ export default function SettingsTab({ onLogout }: Props) {
     }
   };
 
-  // PERBAIKAN: Fungsi Eksekusi Hapus Akun Secara Penuh
+  // PERBAIKAN: Fungsi Hapus Akun yang Terhubung ke store.ts
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
@@ -113,29 +113,18 @@ export default function SettingsTab({ onLogout }: Props) {
         const username = currentUser.username;
         const userId = (currentUser as any).id || 1;
 
-        // 1. Hapus akun dari database backend (jika API tersedia)
+        // 1. Coba hapus di backend (abaikan jika error/cors)
         try {
           await axios.delete(`https://allestyo-api-kardioku.hf.space/hapus_akun/${userId}`);
         } catch (e) {
           console.warn("Melanjutkan penghapusan lokal...");
         }
 
-        // 2. Hapus seluruh riwayat pemeriksaan user ini dari Local Storage
-        localStorage.removeItem(`cardioguard_assessments_${username}`);
-
-        // 3. Hapus data kredensial (username & password) dari daftar user
-        const usersRaw = localStorage.getItem('cardioguard_users');
-        if (usersRaw) {
-          const users = JSON.parse(usersRaw);
-          delete users[username]; // Menghapus akun secara permanen dari memori
-          localStorage.setItem('cardioguard_users', JSON.stringify(users));
-        }
+        // 2. Panggil fungsi sapu bersih dari store.ts
+        deleteUserAccount(username);
       }
 
-      // 4. Hapus sesi aktif (Logout)
-      localStorage.removeItem('cardioguard_current_user');
-      
-      // 5. Arahkan kembali ke halaman login
+      // 3. Arahkan kembali ke halaman login
       if (onLogout) {
         onLogout();
       }
@@ -351,7 +340,7 @@ export default function SettingsTab({ onLogout }: Props) {
         <h3 className="font-semibold text-foreground mb-3">ℹ️ Tentang Kardioku</h3>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>Developer: <span className="text-foreground font-medium">Allestyo</span></p>
-          <p>Versi: <span className="text-foreground font-medium">2.1.0</span></p>
+          <p>Versi: <span className="text-foreground font-medium">2.0.0</span></p>
           <p>Algoritma Berbasis: <span className="text-foreground font-medium">Model Framingham Heart Study</span></p>
           <div className="mt-3 p-3 bg-warning-light border border-warning/20 rounded-lg text-xs text-warning">
             ⚠️ <strong>Disclaimer:</strong> Kardioku adalah alat skrining awal dan bukan pengganti diagnosis medis profesional. Selalu konsultasikan hasil pemeriksaan dengan dokter atau tenaga medis yang kompeten.
@@ -437,36 +426,6 @@ export default function SettingsTab({ onLogout }: Props) {
           </div>
         </div>
       )}
-
-      {/* POP-UP ALERT PREFERENSI */}
-      {alertInfo.visible && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-border p-6 animate-fade-in-up relative">
-            <button 
-              onClick={() => setAlertInfo({ ...alertInfo, visible: false })}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
-            >
-              <XCircle className="w-6 h-6" />
-            </button>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Settings className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground">{alertInfo.title}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              {alertInfo.message}
-            </p>
-            <button 
-              onClick={() => setAlertInfo({ ...alertInfo, visible: false })}
-              className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-all shadow-sm"
-            >
-              Mengerti
-            </button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

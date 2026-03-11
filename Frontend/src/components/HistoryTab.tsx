@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Minus, FileText, Info, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { AssessmentRecord } from '@/lib/store';
-import axios from 'axios';
+// PERBAIKAN: Mengimpor getAssessments dari store
+import { AssessmentRecord, getAssessments } from '@/lib/store'; 
 
 // IMPORT ALAT PEMBUAT SURAT PDF
 import jsPDF from 'jspdf';
@@ -34,32 +34,21 @@ export default function HistoryTab({ user }: Props) {
   const [records, setRecords] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // PERBAIKAN: Membaca data dari sumber lokal yang sama dengan Tab Pemeriksaan
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        setLoading(true);
-        const userId = user?.id || 1;
-        const response = await axios.get(`https://allestyo-api-kardioku.hf.space/riwayat/${userId}`);
-        
-        if (response.data.status_kode === 200) {
-          const mappedData = response.data.data.map((r: any) => ({
-            id: r.id.toString(),
-            tanggal: r.tanggal_periksa.split('T')[0],
-            sistolik: r.tensi_sistolik,
-            diastolik: r.tensi_diastolik,
-            bmi: r.bmi_score,
-            riskLevel: r.status_risiko,
-            riskScore: 0 
-          }));
-          setRecords(mappedData);
-        }
-      } catch (err) {
-        console.error("Gagal mengambil riwayat:", err);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    try {
+      if (user && user.username) {
+        // Mengambil data yang 100% sinkron dengan sistem aplikasi
+        const localData = getAssessments(user.username);
+        setRecords(localData);
       }
-    };
-    fetchHistory();
+    } catch (err) {
+      console.error("Gagal mengambil riwayat:", err);
+    } finally {
+      // Memberikan sedikit efek loading agar UI terlihat natural
+      setTimeout(() => setLoading(false), 300); 
+    }
   }, [user]);
 
   const sliceCount = filter === 'harian' ? 7 : filter === 'mingguan' ? 14 : 30;
@@ -94,16 +83,16 @@ export default function HistoryTab({ user }: Props) {
 
     // Judul Kop Surat
     doc.setFontSize(22);
-    doc.setTextColor(12, 130, 163); // Warna Teal Kardioku
+    doc.setTextColor(12, 130, 163); 
     doc.text('Kardio', 14, 22);
-    doc.setTextColor(255, 75, 106); // Warna Merah Kardioku
-    doc.text('ku', 40, 22); // Menyesuaikan posisi sambungan kata
+    doc.setTextColor(255, 75, 106); 
+    doc.text('ku', 40, 22); 
 
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
     doc.text('SURAT KETERANGAN HASIL PEMERIKSAAN', 14, 32);
     doc.setLineWidth(0.5);
-    doc.line(14, 35, 196, 35); // Garis bawah kop surat
+    doc.line(14, 35, 196, 35); 
 
     // Data Diri Pasien
     doc.setFontSize(11);
@@ -132,12 +121,12 @@ export default function HistoryTab({ user }: Props) {
       head: [tableColumn],
       body: tableRows,
       theme: 'grid',
-      headStyles: { fillColor: [12, 130, 163] }, // Header tabel warna teal
+      headStyles: { fillColor: [12, 130, 163] }, 
       styles: { fontSize: 10 },
       alternateRowStyles: { fillColor: [245, 245, 245] }
     });
 
-    // Catatan Kaki / Disclaimer (Muncul di bawah tabel)
+    // Catatan Kaki / Disclaimer
     const finalY = (doc as any).lastAutoTable.finalY || 68;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
@@ -157,7 +146,7 @@ export default function HistoryTab({ user }: Props) {
     return (
       <div className="h-64 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Sedang mengambil riwayat medis anda...</p>
+        <p className="text-sm text-muted-foreground">Sedang memuat data sinkronisasi...</p>
       </div>
     );
   }
@@ -237,10 +226,10 @@ export default function HistoryTab({ user }: Props) {
             </div>
           </div>
 
-          {/* TOMBOL UNDUH PDF RESMI */}
           <button
             onClick={handleGeneratePDF}
-            className="w-full py-3 rounded-xl gradient-hero text-primary-foreground font-semibold shadow-primary hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm"
+            disabled={records.length === 0}
+            className="w-full py-3 rounded-xl gradient-hero text-primary-foreground font-semibold shadow-primary hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
           >
             <FileText className="w-4 h-4" />
             Unduh Surat Laporan (PDF)

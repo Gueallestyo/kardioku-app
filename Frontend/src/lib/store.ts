@@ -73,10 +73,23 @@ export function updateUserProfile(username: string, profile: Partial<UserProfile
   }
 }
 
+// FUNGSI BARU: SAPU BERSIH AKUN PERMANEN
+export function deleteUserAccount(username: string) {
+  // 1. Hapus kredensial dari daftar user
+  const users = getUsers();
+  if (users[username]) {
+    delete users[username];
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  }
+  // 2. Hapus seluruh data riwayat pemeriksaan user tersebut
+  localStorage.removeItem(`${STORAGE_KEYS.ASSESSMENTS}_${username}`);
+  // 3. Hapus sesi login yang sedang aktif
+  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+}
+
 // --- Assessments ---
 export function getAssessments(username: string): AssessmentRecord[] {
   const raw = localStorage.getItem(`${STORAGE_KEYS.ASSESSMENTS}_${username}`);
-  // PERBAIKAN: Mengembalikan array kosong [] jika belum ada data, bukan data acak
   return raw ? JSON.parse(raw) : [];
 }
 
@@ -85,8 +98,6 @@ export function saveAssessment(username: string, record: AssessmentRecord) {
   const updated = [record, ...existing];
   localStorage.setItem(`${STORAGE_KEYS.ASSESSMENTS}_${username}`, JSON.stringify(updated));
 }
-
-// FUNGSI getMockAssessments() TELAH DIHAPUS KARENA MENYEBABKAN DATA DESYNCHRONIZATION
 
 // --- Reminder ---
 export function getReminderState(): boolean {
@@ -111,46 +122,30 @@ export function calculateRisk(data: {
   aktivitasFisik: number;
 }): { score: number; level: 'Rendah' | 'Sedang' | 'Tinggi' } {
   let score = 0;
-
-  // Age
   if (data.umur >= 50) score += 25;
   else if (data.umur >= 40) score += 15;
   else if (data.umur >= 30) score += 8;
   else score += 3;
 
-  // BMI
   if (data.bmi >= 30) score += 20;
   else if (data.bmi >= 25) score += 10;
-  else score += 0;
 
-  // Blood pressure
   if (data.sistolik >= 160 || data.diastolik >= 100) score += 30;
   else if (data.sistolik >= 140 || data.diastolik >= 90) score += 20;
   else if (data.sistolik >= 130 || data.diastolik >= 80) score += 10;
-  else score += 0;
 
-  // Cholesterol
   if (data.kolesterol === 3) score += 15;
   else if (data.kolesterol === 2) score += 8;
 
-  // Glucose
   if (data.glukosa === 3) score += 10;
   else if (data.glukosa === 2) score += 5;
 
-  // Smoking
   if (data.merokok === 1) score += 15;
-
-  // Alcohol
   if (data.alkohol === 1) score += 8;
-
-  // Physical activity
   if (data.aktivitasFisik === 0) score += 10;
-
-  // Gender
   if (data.jenisKelamin === 'Pria') score += 5;
 
   score = Math.min(100, score);
-
   let level: 'Rendah' | 'Sedang' | 'Tinggi';
   if (score >= 60) level = 'Tinggi';
   else if (score >= 35) level = 'Sedang';
