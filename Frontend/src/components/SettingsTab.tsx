@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings } from 'lucide-react';
+import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings, Trash2, AlertTriangle } from 'lucide-react';
 import { getReminderState, setReminderState } from '@/lib/store';
 import OneSignal from 'react-onesignal';
 
@@ -22,15 +22,14 @@ export default function SettingsTab({ onLogout }: Props) {
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
   const [customTime, setCustomTime] = useState("");
   
-  // State untuk Pop-up Konfirmasi Logout
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  // State untuk Preferensi Lainnya
   const [localData, setLocalData] = useState(true);
   const [privacyMode, setPrivacyMode] = useState(false);
-  
-  // State untuk Pop-up Alert Preferensi
   const [alertInfo, setAlertInfo] = useState({ visible: false, title: "", message: "" });
+
+  // TAMBAHAN BARU: State untuk Hapus Akun
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!('Notification' in window)) {
@@ -46,15 +45,11 @@ export default function SettingsTab({ onLogout }: Props) {
     setReminderState(newVal);
 
     if (newVal) {
-      // Memanggil pop-up resmi dari OneSignal untuk meminta izin
       await OneSignal.Slidedown.promptPush();
-      
-      // Mengirimkan Tag (Label) ke server OneSignal bahwa user ini aktif
       OneSignal.User.addTag("pengingat_aktif", "true");
       setShowPermissionBanner(true);
       setPermissionStatus('granted');
     } else {
-      // Jika dimatikan, hapus labelnya dari server
       OneSignal.User.addTag("pengingat_aktif", "false");
     }
   };
@@ -62,15 +57,12 @@ export default function SettingsTab({ onLogout }: Props) {
   const toggleSchedule = (key: keyof ReminderSchedule) => {
     setSchedule(prev => {
       const newState = !prev[key];
-      
-      // TAMBAHAN BARU: Mengirim waktu yang dipilih ke server OneSignal
       if (newState) {
         if (key === 'pagi') OneSignal.User.addTag("waktu_pengingat", "08:00");
         if (key === 'siang') OneSignal.User.addTag("waktu_pengingat", "13:00");
         if (key === 'malam') OneSignal.User.addTag("waktu_pengingat", "20:00");
         if (key === 'kustom' && customTime) OneSignal.User.addTag("waktu_pengingat", customTime);
       }
-      
       return { ...prev, [key]: newState };
     });
   };
@@ -87,7 +79,6 @@ export default function SettingsTab({ onLogout }: Props) {
     }
   };
 
-  // Fungsi untuk menangani klik pada Preferensi Lainnya
   const handlePreferenceToggle = (type: 'local' | 'privacy') => {
     if (type === 'local') {
       const newState = !localData;
@@ -109,6 +100,28 @@ export default function SettingsTab({ onLogout }: Props) {
           ? "Mode Privasi diaktifkan: Data diagnostik dan analitik anonim tidak akan dikirimkan ke server pengembang." 
           : "Mode Privasi dimatikan: Aplikasi akan mengirimkan data analitik standar untuk membantu pengembangan fitur Kardioku ke depannya."
       });
+    }
+  };
+
+  // TAMBAHAN BARU: Fungsi Eksekusi Hapus Akun
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      // Simulasi proses penghapusan ke server API (delay 1.5 detik)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Menghapus data sesi lokal dari browser
+      localStorage.removeItem('cardioguard_current_user');
+      
+      // Memaksa pengguna keluar dari aplikasi ke halaman Login
+      if (onLogout) {
+        onLogout();
+      }
+    } catch (error) {
+      console.error("Gagal menghapus akun", error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -226,7 +239,6 @@ export default function SettingsTab({ onLogout }: Props) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setCustomTime(val);
-                      // TAMBAHAN BARU: Otomatis kirim tag ke OneSignal saat jam kustom diubah
                       if (val) {
                         OneSignal.User.addTag("waktu_pengingat", val);
                       }
@@ -317,7 +329,7 @@ export default function SettingsTab({ onLogout }: Props) {
         <h3 className="font-semibold text-foreground mb-3">ℹ️ Tentang Kardioku</h3>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>Developer: <span className="text-foreground font-medium">Allestyo</span></p>
-          <p>Versi: <span className="text-foreground font-medium">v2.1.0</span></p>
+          <p>Versi: <span className="text-foreground font-medium">2.1.0</span></p>
           <p>Algoritma Berbasis: <span className="text-foreground font-medium">Model Framingham Heart Study</span></p>
           <div className="mt-3 p-3 bg-warning-light border border-warning/20 rounded-lg text-xs text-warning">
             ⚠️ <strong>Disclaimer:</strong> Kardioku adalah alat skrining awal dan bukan pengganti diagnosis medis profesional. Selalu konsultasikan hasil pemeriksaan dengan dokter atau tenaga medis yang kompeten.
@@ -325,15 +337,30 @@ export default function SettingsTab({ onLogout }: Props) {
         </div>
       </div>
 
+      {/* Tombol Logout & Zona Berbahaya */}
       {onLogout && (
-        <div className="pt-2 px-2">
+        <div className="pt-2 px-2 space-y-6">
           <button 
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive font-bold hover:bg-destructive hover:text-white transition-all shadow-sm"
+            className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-border bg-card text-foreground font-bold hover:bg-muted transition-all shadow-sm"
           >
             <LogOut className="w-5 h-5" />
             Logout dari akun
           </button>
+
+          {/* DANGER ZONE (Hapus Akun) */}
+          <div className="border-t border-border/50 pt-6">
+            <h3 className="text-xs font-bold text-destructive uppercase tracking-wider mb-3 px-1 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" /> Zona Berbahaya
+            </h3>
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive font-bold hover:bg-destructive hover:text-white transition-all shadow-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+              Hapus Akun Secara Permanen
+            </button>
+          </div>
         </div>
       )}
 
@@ -341,8 +368,8 @@ export default function SettingsTab({ onLogout }: Props) {
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-border p-6 text-center animate-fade-in-up">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <LogOutIcon className="w-8 h-8 text-destructive" />
+            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+              <LogOutIcon className="w-8 h-8 text-foreground" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">Logout dari akun</h3>
             <p className="text-sm text-muted-foreground mb-6">Anda yakin ingin keluar dari akun Kardioku Anda?</p>
@@ -350,8 +377,39 @@ export default function SettingsTab({ onLogout }: Props) {
               <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 py-3 rounded-xl border border-border font-semibold text-muted-foreground hover:bg-muted transition-colors">
                 Batal
               </button>
-              <button onClick={onLogout} className="flex-1 py-3 rounded-xl bg-destructive text-white font-bold hover:bg-destructive/90 transition-all shadow-sm">
+              <button onClick={onLogout} className="flex-1 py-3 rounded-xl bg-foreground text-background font-bold hover:opacity-90 transition-all shadow-sm">
                 Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP KONFIRMASI HAPUS AKUN (Berlapis) */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-destructive/30 p-6 text-center animate-fade-in-up">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Hapus Akun?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tindakan ini <span className="font-bold text-destructive">tidak dapat dibatalkan</span>. Semua data pemeriksaan dan riwayat kesehatan Anda akan dihapus secara permanen dari sistem.
+            </p>
+            <div className="flex flex-col gap-3 mt-6">
+              <button 
+                onClick={handleDeleteAccount} 
+                disabled={isDeleting}
+                className="w-full py-3 rounded-xl bg-destructive text-white font-bold hover:bg-destructive/90 transition-all shadow-sm flex items-center justify-center"
+              >
+                {isDeleting ? 'Menghapus...' : 'Ya, Hapus Permanen'}
+              </button>
+              <button 
+                onClick={() => setShowDeleteConfirm(false)} 
+                disabled={isDeleting}
+                className="w-full py-3 rounded-xl border border-border font-semibold text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Batal
               </button>
             </div>
           </div>
