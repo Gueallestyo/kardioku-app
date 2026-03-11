@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Bell, BellOff, Clock, Info, CheckCircle, XCircle, Moon, Sun, LogOut, LogOutIcon, Settings, Trash2, AlertTriangle } from 'lucide-react';
-import { getReminderState, setReminderState } from '@/lib/store';
+import { getReminderState, setReminderState, getCurrentUser } from '@/lib/store';
 import OneSignal from 'react-onesignal';
+import axios from 'axios';
 
 interface Props {
   onLogout?: () => void;
@@ -27,7 +28,6 @@ export default function SettingsTab({ onLogout }: Props) {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ visible: false, title: "", message: "" });
 
-  // TAMBAHAN BARU: State untuk Hapus Akun
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -103,17 +103,39 @@ export default function SettingsTab({ onLogout }: Props) {
     }
   };
 
-  // TAMBAHAN BARU: Fungsi Eksekusi Hapus Akun
+  // PERBAIKAN: Fungsi Eksekusi Hapus Akun Secara Penuh
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      // Simulasi proses penghapusan ke server API (delay 1.5 detik)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const currentUser = getCurrentUser();
       
-      // Menghapus data sesi lokal dari browser
+      if (currentUser) {
+        const username = currentUser.username;
+        const userId = (currentUser as any).id || 1;
+
+        // 1. Hapus akun dari database backend (jika API tersedia)
+        try {
+          await axios.delete(`https://allestyo-api-kardioku.hf.space/hapus_akun/${userId}`);
+        } catch (e) {
+          console.warn("Melanjutkan penghapusan lokal...");
+        }
+
+        // 2. Hapus seluruh riwayat pemeriksaan user ini dari Local Storage
+        localStorage.removeItem(`cardioguard_assessments_${username}`);
+
+        // 3. Hapus data kredensial (username & password) dari daftar user
+        const usersRaw = localStorage.getItem('cardioguard_users');
+        if (usersRaw) {
+          const users = JSON.parse(usersRaw);
+          delete users[username]; // Menghapus akun secara permanen dari memori
+          localStorage.setItem('cardioguard_users', JSON.stringify(users));
+        }
+      }
+
+      // 4. Hapus sesi aktif (Logout)
       localStorage.removeItem('cardioguard_current_user');
       
-      // Memaksa pengguna keluar dari aplikasi ke halaman Login
+      // 5. Arahkan kembali ke halaman login
       if (onLogout) {
         onLogout();
       }
