@@ -302,7 +302,6 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
                   type="number" 
                   value={sistolik} 
                   onChange={e => setSistolik(e.target.value)} 
-                  placeholder="120" 
                   min={60} max={300} required 
                   className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
                 />
@@ -323,8 +322,7 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
                 <input 
                   type="number" 
                   value={diastolik} 
-                  onChange={e => setDiastolik(e.target.value)} 
-                  placeholder="80" 
+                  onChange={e => setDiastolik(e.target.value)}  
                   min={40} max={200} required 
                   className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
                 />
