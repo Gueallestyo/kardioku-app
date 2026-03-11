@@ -30,7 +30,6 @@ function EducationTable() {
         Referensi Tekanan Darah Klinis (mmHg)
       </h3>
       <div className="space-y-2">
-        {/* Normal / Aman */}
         <div className="flex items-center gap-3 p-3 bg-success-light border border-success/20 rounded-lg">
           <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
           <div className="flex-1 min-w-0">
@@ -41,7 +40,6 @@ function EducationTable() {
             </div>
           </div>
         </div>
-        {/* Pre-Hipertensi / Rentan */}
         <div className="flex items-center gap-3 p-3 bg-warning-light border border-warning/30 rounded-lg">
           <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
           <div className="flex-1 min-w-0">
@@ -52,7 +50,6 @@ function EducationTable() {
             </div>
           </div>
         </div>
-        {/* Hipertensi / Bahaya */}
         <div className="flex items-center gap-3 p-3 bg-destructive-light border border-destructive/20 rounded-lg">
           <AlertOctagon className="w-5 h-5 text-destructive flex-shrink-0" />
           <div className="flex-1 min-w-0">
@@ -238,7 +235,6 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
           </div>
         </div>
 
-        {/* --- SOLUSI UTAMA: Rekomendasi Kondisional Berdasarkan Level --- */}
         <div className="bg-card border border-border rounded-xl p-4 mt-4 print:mb-0">
           <h4 className="font-semibold text-foreground text-sm mb-2">💡 Rekomendasi</h4>
           <p className="text-sm text-muted-foreground">
@@ -249,9 +245,8 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
               : 'Terus jaga gaya hidup sehat Anda dengan pola makan seimbang dan olahraga teratur. Lakukan pemeriksaan tensi rutin untuk pemantauan.'}
           </p>
         </div>
-        {/* ------------------------------------------------------------------ */}
 
-        {/* Actions (Tombol ini tidak akan dicetak) */}
+        {/* Actions */}
         <div className="flex gap-3 mt-6 print:hidden">
           <button
             onClick={handleReset}
@@ -281,62 +276,47 @@ export default function AssessmentTab({ user, onNewRecord }: Props) {
         </div>
       </div>
 
-      {/* --- DESAIN TANDA VITAL YANG DIPERBARUI --- */}
-      <div className="relative">
-        <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
-          Tanda Vital (Tekanan Darah) <span className="text-destructive">*</span>
+      {/* --- DESAIN TANDA VITAL DIKEMBALIKAN KE VERSI SIMPEL --- */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" /> Tanda Vital <span className="text-destructive">*</span>
         </h3>
-        
-        {/* Container Utama Tanda Vital */}
-        <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-card to-primary/5 border-2 border-primary/20 rounded-2xl shadow-sm relative overflow-hidden">
-          {/* Efek Latar Belakang */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-
+        <div className="grid grid-cols-2 gap-4">
           {/* Sistolik */}
-          <div className="group space-y-2 relative z-10">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Sistolik</label>
-            <div className="relative bg-background border border-border rounded-xl px-4 py-3 shadow-inner focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              <div className="flex items-end gap-2">
-                <input 
-                  type="number" 
-                  value={sistolik} 
-                  onChange={e => setSistolik(e.target.value)} 
-                  min={60} max={300} required 
-                  className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
-                />
-              </div>
-              <div className="absolute right-3 bottom-3 flex items-center gap-1 text-muted-foreground/40 group-focus-within:text-primary transition-colors">
-                <Heart className="w-4 h-4" />
-                <span className="text-xs font-semibold">mmHg</span>
-              </div>
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Tekanan Sistolik</p>
+            <div className="relative flex items-end">
+              <input 
+                type="number" 
+                value={sistolik} 
+                onChange={e => setSistolik(e.target.value)} 
+                placeholder="0" 
+                min={60} max={300} required 
+                className="w-full text-2xl font-bold text-foreground bg-transparent border-b-2 border-primary/30 focus:border-primary outline-none pb-1 transition-colors pr-6" 
+              />
+              <Heart className="absolute right-1 bottom-2 w-4 h-4 text-muted-foreground/50" />
             </div>
-            <p className="text-[10px] text-muted-foreground/70">Saat jantung berdetak (atas)</p>
+            <p className="text-xs text-muted-foreground">mmHg</p>
           </div>
-
           {/* Diastolik */}
-          <div className="group space-y-2 relative z-10">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Diastolik</label>
-            <div className="relative bg-background border border-border rounded-xl px-4 py-3 shadow-inner focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              <div className="flex items-end gap-2">
-                <input 
-                  type="number" 
-                  value={diastolik} 
-                  onChange={e => setDiastolik(e.target.value)}  
-                  min={40} max={200} required 
-                  className="w-full text-3xl sm:text-4xl font-extrabold text-foreground bg-transparent outline-none placeholder:text-muted/30" 
-                />
-              </div>
-              <div className="absolute right-3 bottom-3 flex items-center gap-1 text-muted-foreground/40 group-focus-within:text-primary transition-colors">
-                <Activity className="w-4 h-4" />
-                <span className="text-xs font-semibold">mmHg</span>
-              </div>
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Tekanan Diastolik</p>
+            <div className="relative flex items-end">
+              <input 
+                type="number" 
+                value={diastolik} 
+                onChange={e => setDiastolik(e.target.value)} 
+                placeholder="0" 
+                min={40} max={200} required 
+                className="w-full text-2xl font-bold text-foreground bg-transparent border-b-2 border-primary/30 focus:border-primary outline-none pb-1 transition-colors pr-6" 
+              />
+              <Activity className="absolute right-1 bottom-2 w-4 h-4 text-muted-foreground/50" />
             </div>
-            <p className="text-[10px] text-muted-foreground/70">Saat jantung istirahat (bawah)</p>
+            <p className="text-xs text-muted-foreground">mmHg</p>
           </div>
         </div>
       </div>
-      {/* ------------------------------------------- */}
+      {/* ------------------------------------------------------- */}
 
       <div className="border border-border rounded-xl overflow-hidden">
         <button type="button" onClick={() => setAccordionOpen(!accordionOpen)} className="w-full flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors text-left">
